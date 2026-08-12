@@ -40,35 +40,11 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           VERSION="${GITHUB_REF#refs/tags/v}"
-          python - <<EOF
-          from pathlib import Path
-          path = Path("pyproject.toml")
-          text = path.read_text()
-          lines = []
-          for line in text.splitlines():
-              if line.startswith("version = "):
-                  lines.append(f'version = "{VERSION}"')
-              else:
-                  lines.append(line)
-          path.write_text("\n".join(lines) + "\n")
-          EOF
+          sed -i "s/^version = .*/version = \"${VERSION}\"/" pyproject.toml
 
       - name: Set version from input
         if: github.event_name == 'workflow_dispatch' && inputs.version != ''
-        run: |
-          python - <<EOF
-          from pathlib import Path
-          version = "${{ inputs.version }}"
-          path = Path("pyproject.toml")
-          text = path.read_text()
-          lines = []
-          for line in text.splitlines():
-              if line.startswith("version = "):
-                  lines.append(f'version = "{version}"')
-              else:
-                  lines.append(line)
-          path.write_text("\n".join(lines) + "\n")
-          EOF
+        run: sed -i 's/^version = .*/version = "${{ inputs.version }}"/' pyproject.toml
 
       - name: Build package
         run: python -m build
