@@ -58,7 +58,7 @@ init(
 
 Requires Python 3.10+.  
 Uncaught errors in the main thread, worker threads, and the asyncio event loop are reported automatically after `init`.  
-Details: [Python docs](https://retracekit.cloud/docs/environments/python/) *(coming soon)*
+Details: [Python docs](https://retracekit.cloud/docs/environments/python/)
 
 ## FastAPI
 
