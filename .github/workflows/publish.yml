@@ -1,0 +1,78 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Optional version override (e.g. 0.1.0). Leave empty to use pyproject.toml."
+        required: false
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Required for PyPI trusted publishing (OIDC)
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: pip install build twine
+
+      - name: Install dependencies
+        run: pip install -e ".[dev,fastapi,django]"
+
+      - name: Test
+        run: pytest
+
+      - name: Set version from tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          python - <<EOF
+          from pathlib import Path
+          path = Path("pyproject.toml")
+          text = path.read_text()
+          lines = []
+          for line in text.splitlines():
+              if line.startswith("version = "):
+                  lines.append(f'version = "{VERSION}"')
+              else:
+                  lines.append(line)
+          path.write_text("\n".join(lines) + "\n")
+          EOF
+
+      - name: Set version from input
+        if: github.event_name == 'workflow_dispatch' && inputs.version != ''
+        run: |
+          python - <<EOF
+          from pathlib import Path
+          version = "${{ inputs.version }}"
+          path = Path("pyproject.toml")
+          text = path.read_text()
+          lines = []
+          for line in text.splitlines():
+              if line.startswith("version = "):
+                  lines.append(f'version = "{version}"')
+              else:
+                  lines.append(line)
+          path.write_text("\n".join(lines) + "\n")
+          EOF
+
+      - name: Build package
+        run: python -m build
+
+      # TODO: Configure PyPI trusted publishing for this repository, then uncomment:
+      # - name: Publish to PyPI
+      #   uses: pypa/gh-action-pypi-publish@release/v1
