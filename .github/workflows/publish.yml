@@ -73,6 +73,5 @@ jobs:
       - name: Build package
         run: python -m build
 
-      # TODO: Configure PyPI trusted publishing for this repository, then uncomment:
-      # - name: Publish to PyPI
-      #   uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
